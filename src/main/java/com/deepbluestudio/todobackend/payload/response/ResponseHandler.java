@@ -13,7 +13,7 @@ public class ResponseHandler {
         map.put("message", message);
         map.put("status", status.value());
 
-        return new ResponseEntity<>(map,status);
+        return new ResponseEntity<>(map, status);
     }
 
     public static ResponseEntity<Object> generateResponse(String message, HttpStatus status, Object responseObj) {
@@ -22,7 +22,7 @@ public class ResponseHandler {
         map.put("status", status.value());
         map.put("data", responseObj);
 
-        return new ResponseEntity<>(map,status);
+        return new ResponseEntity<>(map, status);
     }
 
     public static ResponseEntity<Object> generateResponseWithPaging(String message, HttpStatus status,
@@ -32,8 +32,8 @@ public class ResponseHandler {
         map.put("message", message);
         map.put("status", status.value());
         map.put("data", responseObj);
-        map.put("page", new Pagination(pageObj.getPageNumber(), pageObj.getPageSize(), totalElements));
+        map.put("page", new Pagination(pageObj.getPageNumber() + 1, pageObj.getPageSize(), totalElements));
 
-        return new ResponseEntity<>(map,status);
+        return new ResponseEntity<>(map, status);
     }
 }

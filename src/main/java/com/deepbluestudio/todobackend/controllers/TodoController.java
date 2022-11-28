@@ -26,11 +26,18 @@ public class TodoController {
     }
 
     @GetMapping
-    public ResponseEntity<?> get(@RequestParam(value = "page", defaultValue = "1") Integer page) {
-        Page<Todo> todos = todoRepository.findAll(PageRequest.of(page - 1,
-                20,
-                Sort.by("updatedAt").descending()));
-        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(), HttpStatus.OK, todos.getContent(), todos.getPageable(), todos.getTotalElements());
+    public ResponseEntity<?> get(@RequestParam(value = "page", defaultValue = "1") Integer page,
+                                 @RequestParam(value = "size", defaultValue = "20") Integer size,
+                                 @RequestParam(value = "sort", defaultValue = "updatedAt") String sort,
+                                 @RequestParam(value = "order", defaultValue = "desc") String order) {
+        Page<Todo> todos = todoRepository.findAll(PageRequest.of(
+                page - 1,
+                size,
+                order.equals("desc")
+                        ? Sort.by(sort).descending()
+                        : Sort.by(sort).ascending()));
+        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(), HttpStatus.OK,
+                todos.getContent(), todos.getPageable(), todos.getTotalElements());
     }
 
     @PostMapping
