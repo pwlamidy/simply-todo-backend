@@ -15,12 +15,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,13 +34,37 @@ public class TodoControllerTests {
 
     @Test
     public void getTodoShouldBeSuccess() throws Exception {
-        Page<Todo> aMockPage = generateMockPage();
+        final List<Todo> todoList = new ArrayList<>();
+        todoList.add(new Todo(1L, "title 1", null, null, null, null, null, null));
+        todoList.add(new Todo(2L, "title 2", null, null, null, null, null, null));
+
+        Page<Todo> aMockPage = generateMockPage(todoList);
 
         when(todoRepository.findAll(Mockito.any(Pageable.class))).thenReturn(aMockPage);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.page.total").value(aMockPage.getTotalElements()));
+                .andExpect(jsonPath("$.data[0].id").value(1L));
+    }
+
+    @Test
+    public void findAllByDateBetweenShouldBeSuccess() throws Exception {
+        Date now = new Date();
+
+        final List<Todo> todoList = new ArrayList<>();
+        todoList.add(new Todo(1L, "title 1", null, null, null, null, now, now));
+        todoList.add(new Todo(2L, "title 2", null, null, null, null, now, now));
+
+        Page<Todo> aMockPage = generateMockPage(todoList);
+
+        when(todoRepository.findAllByDateBetween(any(Date.class), any(Date.class), Mockito.any(Pageable.class)))
+                .thenReturn(aMockPage);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/findAllByDateBetween")
+                        .param("startDate", "2022-11-28T16:00:00.000Z")
+                        .param("endDate", "2022-11-28T16:00:00.000Z"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(1L));
     }
 
     @Test
@@ -80,87 +102,95 @@ public class TodoControllerTests {
                 .andExpect(status().isOk());
     }
 
-    private Page<Todo> generateMockPage() {
-        return new Page<>() {
-            @Override
-            public int getTotalPages() {
-                return 0;
-            }
+    private Page<Todo> generateMockPage(List<Todo> todoList) {
+        return new MockPage(todoList);
+    }
 
-            @Override
-            public long getTotalElements() {
-                return 0;
-            }
+    private class MockPage implements Page<Todo> {
+        private final List<Todo> mockContent;
 
-            @Override
-            public <U> Page<U> map(Function<? super Todo, ? extends U> converter) {
-                return null;
-            }
+        public MockPage(List<Todo> mockContent) {
+            this.mockContent = mockContent;
+        }
 
-            @Override
-            public int getNumber() {
-                return 0;
-            }
+        @Override
+        public int getTotalPages() {
+            return 0;
+        }
 
-            @Override
-            public int getSize() {
-                return 1;
-            }
+        @Override
+        public long getTotalElements() {
+            return this.mockContent.size();
+        }
 
-            @Override
-            public int getNumberOfElements() {
-                return 0;
-            }
+        @Override
+        public int getNumber() {
+            return 0;
+        }
 
-            @Override
-            public List<Todo> getContent() {
-                return null;
-            }
+        @Override
+        public int getSize() {
+            return 1;
+        }
 
-            @Override
-            public boolean hasContent() {
-                return false;
-            }
+        @Override
+        public int getNumberOfElements() {
+            return 0;
+        }
 
-            @Override
-            public Sort getSort() {
-                return Sort.by("updatedAt").descending();
-            }
+        @Override
+        public List<Todo> getContent() {
+            return this.mockContent;
+        }
 
-            @Override
-            public boolean isFirst() {
-                return false;
-            }
+        @Override
+        public boolean hasContent() {
+            return false;
+        }
 
-            @Override
-            public boolean isLast() {
-                return false;
-            }
+        @Override
+        public Sort getSort() {
+            return Sort.by("updatedAt").descending();
+        }
 
-            @Override
-            public boolean hasNext() {
-                return false;
-            }
+        @Override
+        public boolean isFirst() {
+            return false;
+        }
 
-            @Override
-            public boolean hasPrevious() {
-                return false;
-            }
+        @Override
+        public boolean isLast() {
+            return false;
+        }
 
-            @Override
-            public Pageable nextPageable() {
-                return null;
-            }
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
 
-            @Override
-            public Pageable previousPageable() {
-                return null;
-            }
+        @Override
+        public boolean hasPrevious() {
+            return false;
+        }
 
-            @Override
-            public Iterator<Todo> iterator() {
-                return null;
-            }
-        };
+        @Override
+        public Pageable nextPageable() {
+            return null;
+        }
+
+        @Override
+        public Pageable previousPageable() {
+            return null;
+        }
+
+        @Override
+        public <U> Page<U> map(Function<? super Todo, ? extends U> converter) {
+            return null;
+        }
+
+        @Override
+        public Iterator<Todo> iterator() {
+            return null;
+        }
     }
 }
