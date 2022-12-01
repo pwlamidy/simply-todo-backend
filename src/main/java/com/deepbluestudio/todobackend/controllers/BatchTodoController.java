@@ -2,6 +2,7 @@ package com.deepbluestudio.todobackend.controllers;
 
 import com.deepbluestudio.todobackend.models.Todo;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/batch")
+@Tag(name = "Batch - Todo")
 public class BatchTodoController {
     @Autowired
     TodoRepository todoRepository;

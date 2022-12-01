@@ -4,6 +4,9 @@ import com.deepbluestudio.todobackend.models.Todo;
 import com.deepbluestudio.todobackend.payload.response.EStatus;
 import com.deepbluestudio.todobackend.payload.response.ResponseHandler;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import java.util.Optional;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/todos")
+@Tag(name = "Todo")
 public class TodoController {
     final TodoRepository todoRepository;
 
@@ -52,12 +56,17 @@ public class TodoController {
                 todos.getContent(), todos.getPageable(), todos.getTotalElements());
     }
 
-    @GetMapping("/findAllByDateBetween")
-    public ResponseEntity<?> findAllByDateBetween(@RequestParam(value = "startDate") String startDate,
-                                                  @RequestParam(value = "endDate") String endDate,
+    @GetMapping("/search")
+    public ResponseEntity<?> findAllByDateBetween(@RequestParam(value = "startDate")
+                                                        @Parameter(description = "Only support ISO format (ISO 8601)",
+                                                                example = "2022-11-27T16:00:00.000Z") String startDate,
+                                                  @RequestParam(value = "endDate")
+                                                        @Parameter(description = "Only support ISO format (ISO 8601)",
+                                                                example = "2022-11-27T16:00:00.000Z") String endDate,
                                                   @RequestParam(value = "page", defaultValue = "1") Integer page,
                                                   @RequestParam(value = "size", defaultValue = "20") Integer size,
-                                                  @RequestParam(value = "sort", defaultValue = "updatedAt") String sort,
+                                                  @RequestParam(value = "sort", defaultValue = "updatedAt")
+                                                        @Parameter(description = "Support 'Todo' schema only") String sort,
                                                   @RequestParam(value = "order", defaultValue = "desc") String order) {
 
         OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
@@ -96,6 +105,7 @@ public class TodoController {
         return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, updateResult);
     }
 
+    @Operation(description = "Currently support 'completed' status update only")
     @PatchMapping("/{id}")
     public ResponseEntity<?> patchTodo(@PathVariable("id") Long id, @RequestBody Todo todo) {
         Object updateResult = null;

@@ -60,7 +60,7 @@ public class TodoControllerTests {
         when(todoRepository.findAllByDateBetween(any(Date.class), any(Date.class), Mockito.any(Pageable.class)))
                 .thenReturn(aMockPage);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/findAllByDateBetween")
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/search")
                         .param("startDate", "2022-11-28T16:00:00.000Z")
                         .param("endDate", "2022-11-28T16:00:00.000Z"))
                 .andExpect(status().isOk())
