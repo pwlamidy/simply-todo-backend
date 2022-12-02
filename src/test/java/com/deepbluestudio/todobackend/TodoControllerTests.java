@@ -60,9 +60,9 @@ public class TodoControllerTests {
         when(todoRepository.findAllByDateBetween(any(Date.class), any(Date.class), Mockito.any(Pageable.class)))
                 .thenReturn(aMockPage);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/search")
-                        .param("startDate", "2022-11-28T16:00:00.000Z")
-                        .param("endDate", "2022-11-28T16:00:00.000Z"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos")
+                        .param("date_gte", "2022-11-28T16:00:00.000Z")
+                        .param("date_lte", "2022-11-28T16:00:00.000Z"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].id").value(1L));
     }

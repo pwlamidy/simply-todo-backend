@@ -42,51 +42,43 @@ public class TodoController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getTodos(@RequestParam(value = "page", defaultValue = "1") Integer page,
+    public ResponseEntity<?> getTodos(@RequestParam(value = "date_gte", required = false)
+                                      @Parameter(description = "Date greater than or equal to value. Support ISO format (ISO 8601)",
+                                              example = "2022-11-27T16:00:00.000Z") String startDate,
+                                      @RequestParam(value = "date_lte", required = false)
+                                      @Parameter(description = "Date less than or equal to value. Support ISO format (ISO 8601)",
+                                              example = "2022-11-27T16:00:00.000Z") String endDate,
+                                      @RequestParam(value = "page", defaultValue = "1") Integer page,
                                       @RequestParam(value = "size", defaultValue = "20") Integer size,
-                                      @RequestParam(value = "sort", defaultValue = "updatedAt") String sort,
+                                      @RequestParam(value = "sort", defaultValue = "updatedAt")
+                                      @Parameter(description = "Support 'Todo' schema only") String sort,
                                       @RequestParam(value = "order", defaultValue = "desc") String order) {
-        Page<Todo> todos = todoRepository.findAll(PageRequest.of(
+        Page<Todo> todos;
+        PageRequest pageRequest = PageRequest.of(
                 page - 1,
                 size,
                 order.equals("desc")
                         ? Sort.by(sort).descending()
-                        : Sort.by(sort).ascending()));
-        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(), HttpStatus.OK,
-                todos.getContent(), todos.getPageable(), todos.getTotalElements());
-    }
+                        : Sort.by(sort).ascending());
 
-    @GetMapping("/search")
-    public ResponseEntity<?> findAllByDateBetween(@RequestParam(value = "startDate")
-                                                        @Parameter(description = "Only support ISO format (ISO 8601)",
-                                                                example = "2022-11-27T16:00:00.000Z") String startDate,
-                                                  @RequestParam(value = "endDate")
-                                                        @Parameter(description = "Only support ISO format (ISO 8601)",
-                                                                example = "2022-11-27T16:00:00.000Z") String endDate,
-                                                  @RequestParam(value = "page", defaultValue = "1") Integer page,
-                                                  @RequestParam(value = "size", defaultValue = "20") Integer size,
-                                                  @RequestParam(value = "sort", defaultValue = "updatedAt")
-                                                        @Parameter(description = "Support 'Todo' schema only") String sort,
-                                                  @RequestParam(value = "order", defaultValue = "desc") String order) {
+        if (startDate == null || endDate == null) {
+            todos = todoRepository.findAll(pageRequest);
+        } else {
+            OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
+            OffsetDateTime parsedEndDate = OffsetDateTime.parse(endDate);
 
-        OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
-        OffsetDateTime parsedEndDate = OffsetDateTime.parse(endDate);
+            Date startDateTime = Date.from(parsedStartDateTime.toInstant());
+            Date endDateTime = Date.from(parsedEndDate.toInstant());
 
-        Date startDateTime = Date.from(parsedStartDateTime.toInstant());
-        Date endDateTime = Date.from(parsedEndDate.toInstant());
+            logger.error(startDateTime + ", " + endDateTime);
 
-        logger.error(startDateTime + ", " + endDateTime);
-
-        Page<Todo> todos = todoRepository.findAllByDateBetween(
-                startDateTime,
-                endDateTime,
-                PageRequest.of(
-                        page - 1,
-                        size,
-                        order.equals("desc")
-                                ? Sort.by(sort).descending()
-                                : Sort.by(sort).ascending()));
-        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(), HttpStatus.OK, todos.getContent(), todos.getPageable(), todos.getTotalElements());
+            todos = todoRepository.findAllByDateBetween(startDateTime, endDateTime, pageRequest);
+        }
+        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(),
+                                                            HttpStatus.OK,
+                                                            todos.getContent(),
+                                                            todos.getPageable(),
+                                                            todos.getTotalElements());
     }
 
     @PostMapping
