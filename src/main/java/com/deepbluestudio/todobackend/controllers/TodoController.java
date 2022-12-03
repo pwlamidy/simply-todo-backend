@@ -3,6 +3,7 @@ package com.deepbluestudio.todobackend.controllers;
 import com.deepbluestudio.todobackend.models.Todo;
 import com.deepbluestudio.todobackend.payload.response.EStatus;
 import com.deepbluestudio.todobackend.payload.response.ResponseHandler;
+import com.deepbluestudio.todobackend.repository.dto.TodoCount;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,8 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -74,11 +74,12 @@ public class TodoController {
 
             todos = todoRepository.findAllByDateBetween(startDateTime, endDateTime, pageRequest);
         }
-        return ResponseHandler.generateResponseWithPaging(EStatus.SUCCESS.getStatus(),
-                                                            HttpStatus.OK,
-                                                            todos.getContent(),
-                                                            todos.getPageable(),
-                                                            todos.getTotalElements());
+        return ResponseHandler.generateResponseWithPaging(
+                EStatus.SUCCESS.getStatus(),
+                HttpStatus.OK,
+                todos.getContent(),
+                todos.getPageable(),
+                todos.getTotalElements());
     }
 
     @PostMapping
@@ -114,5 +115,23 @@ public class TodoController {
     public ResponseEntity<?> deleteTodo(@PathVariable("id") Long id) {
         todoRepository.deleteById(id);
         return ResponseHandler.generateResponseWithoutData(EStatus.SUCCESS.getStatus(), HttpStatus.OK);
+    }
+
+    @GetMapping("/count-by-date")
+    public ResponseEntity<?> countTodosByDate(@RequestParam(value = "date_gte")
+                                              @Parameter(description = "Date greater than or equal to value. Support ISO format (ISO 8601)",
+                                                      example = "2022-11-27T16:00:00.000Z") String startDate,
+                                              @RequestParam(value = "date_lte")
+                                              @Parameter(description = "Date less than or equal to value. Support ISO format (ISO 8601)",
+                                                      example = "2022-11-27T16:00:00.000Z") String endDate) {
+        OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
+        OffsetDateTime parsedEndDate = OffsetDateTime.parse(endDate);
+
+        Date startDateTime = Date.from(parsedStartDateTime.toInstant());
+        Date endDateTime = Date.from(parsedEndDate.toInstant());
+
+        List<TodoCount> todoCountList = todoRepository.countTotalTodosByDateClass(startDateTime, endDateTime);
+
+        return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, todoCountList);
     }
 }

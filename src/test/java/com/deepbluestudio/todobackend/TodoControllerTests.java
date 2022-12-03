@@ -2,6 +2,7 @@ package com.deepbluestudio.todobackend;
 
 import com.deepbluestudio.todobackend.models.Todo;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
+import com.deepbluestudio.todobackend.repository.dto.TodoCount;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +101,22 @@ public class TodoControllerTests {
     public void deleteTodoShouldBeSuccess() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/todos/5"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void countTodosByDateShouldBeSuccess() throws Exception {
+        Date now = new Date();
+
+        final List<TodoCount> todoCountList = new ArrayList<>();
+        todoCountList.add(new TodoCount(now, 2L));
+
+        when(todoRepository.countTotalTodosByDateClass(any(Date.class), any(Date.class))).thenReturn(todoCountList);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/count-by-date")
+                        .param("date_gte", "2022-11-28T16:00:00.000Z")
+                        .param("date_lte", "2022-11-28T16:00:00.000Z"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].total").value(2));
     }
 
     private Page<Todo> generateMockPage(List<Todo> todoList) {

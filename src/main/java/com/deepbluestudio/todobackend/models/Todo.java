@@ -1,9 +1,7 @@
 package com.deepbluestudio.todobackend.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.deepbluestudio.todobackend.repository.dto.TodoCount;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -11,6 +9,25 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.util.Date;
 
 @Entity
+@NamedNativeQuery(
+        name = "find_todocount_dto",
+        query = "SELECT DATE(t.date) AS date, COUNT(t.date) AS total " +
+                "FROM Todo AS t " +
+                "WHERE DATE(t.date) between :startDate and :endDate " +
+                "GROUP BY DATE(t.date) " +
+                "ORDER BY DATE(t.date)",
+        resultSetMapping = "todocount_dto"
+)
+@SqlResultSetMapping(
+        name = "todocount_dto",
+        classes = @ConstructorResult(
+                targetClass = TodoCount.class,
+                columns = {
+                        @ColumnResult(name = "date", type = Date.class),
+                        @ColumnResult(name = "total", type = Long.class),
+                }
+        )
+)
 public class Todo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
