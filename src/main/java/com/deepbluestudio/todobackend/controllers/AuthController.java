@@ -1,12 +1,17 @@
 package com.deepbluestudio.todobackend.controllers;
 
+import com.deepbluestudio.todobackend.exception.TokenRefreshException;
+import com.deepbluestudio.todobackend.models.RefreshToken;
 import com.deepbluestudio.todobackend.models.User;
 import com.deepbluestudio.todobackend.payload.request.LoginRequest;
 import com.deepbluestudio.todobackend.payload.request.SignupRequest;
+import com.deepbluestudio.todobackend.payload.request.TokenRefreshRequest;
 import com.deepbluestudio.todobackend.payload.response.LoginResponse;
 import com.deepbluestudio.todobackend.payload.response.ResponseHandler;
+import com.deepbluestudio.todobackend.payload.response.TokenRefreshResponse;
 import com.deepbluestudio.todobackend.repository.UserRepository;
 import com.deepbluestudio.todobackend.security.jwt.JwtUtils;
+import com.deepbluestudio.todobackend.security.services.RefreshTokenService;
 import com.deepbluestudio.todobackend.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -32,6 +37,9 @@ public class AuthController {
     AuthenticationManager authenticationManager;
 
     @Autowired
+    RefreshTokenService refreshTokenService;
+
+    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -50,7 +58,10 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
         return ResponseEntity.ok(new LoginResponse(jwt,
+                refreshToken.getToken(),
                 userDetails.getUsername(),
                 userDetails.getEmail()));
     }
@@ -73,5 +84,20 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseHandler.generateResponseWithoutData("User registered successfully!", HttpStatus.OK);
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
+        String requestRefreshToken = request.getRefreshToken();
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+                })
+                .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
+                        "Refresh token is not in database!"));
     }
 }

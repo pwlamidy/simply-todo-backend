@@ -35,6 +35,17 @@ public class JwtUtils {
                 .compact();
     }
 
+    public String generateTokenFromUsername(String username) {
+        Key secretKey = getSigningKey();
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     public String getUserNameFromJwtToken(String token) {
         Key secretKey = getSigningKey();
         return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody().getSubject();
