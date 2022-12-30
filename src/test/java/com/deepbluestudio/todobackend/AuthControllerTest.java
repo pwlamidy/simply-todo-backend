@@ -1,8 +1,10 @@
 package com.deepbluestudio.todobackend;
 
+import com.deepbluestudio.todobackend.models.RefreshToken;
 import com.deepbluestudio.todobackend.models.User;
 import com.deepbluestudio.todobackend.repository.UserRepository;
 import com.deepbluestudio.todobackend.security.jwt.JwtUtils;
+import com.deepbluestudio.todobackend.security.services.RefreshTokenService;
 import com.deepbluestudio.todobackend.security.services.UserDetailsImpl;
 import com.deepbluestudio.todobackend.security.services.UserDetailsServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,6 +24,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -45,6 +51,9 @@ public class AuthControllerTest {
 
     @MockBean
     UserDetailsServiceImpl userDetailsServiceImpl;
+
+    @MockBean
+    RefreshTokenService refreshTokenService;
 
     private static User testUser;
     private static String testUserJsonString;
@@ -101,6 +110,9 @@ public class AuthControllerTest {
     public void existingUserSignInSuccess() throws Exception {
         String testJwtToken = "123";
 
+        RefreshToken testRefreshToken = new RefreshToken();
+        testRefreshToken.setToken("test");
+
         Authentication authentication = mock(Authentication.class);
         authentication.setAuthenticated(true);
         when(authentication.isAuthenticated()).thenReturn(true);
@@ -109,6 +121,7 @@ public class AuthControllerTest {
         when(authenticationManager.authenticate(Mockito.any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(userDetailsServiceImpl.loadUserByUsername(eq(testUser.getEmail()))).thenReturn(testUserDetails);
         when(jwtUtils.generateJwtToken(Mockito.any(Authentication.class))).thenReturn(testJwtToken);
+        when(refreshTokenService.createRefreshToken(Mockito.any())).thenReturn(testRefreshToken);
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/signin")
                         .content(testUserJsonString)
@@ -133,5 +146,30 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    @Test
+    public void refreshJwtTokenSuccess() throws Exception {
+        String testJwtToken = "123";
+
+        Map<String, String> testReqBody = new HashMap<>() {{
+            put("refreshToken", "test");
+        }};
+        ObjectMapper objectMapper = new ObjectMapper();
+        String refreshTokenString = objectMapper.writeValueAsString(testReqBody);
+
+        RefreshToken testRefreshToken = new RefreshToken();
+        testRefreshToken.setToken("test");
+        testRefreshToken.setUser(testUser);
+
+        when(refreshTokenService.findByToken(Mockito.any(String.class))).thenReturn(Optional.of(testRefreshToken));
+        when(refreshTokenService.verifyExpiration(Mockito.any(RefreshToken.class))).thenReturn(testRefreshToken);
+        when(jwtUtils.generateTokenFromUsername(Mockito.any(String.class))).thenReturn(testJwtToken);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/refresh-token")
+                        .content(refreshTokenString)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.accessToken").value(testJwtToken));
     }
 }
