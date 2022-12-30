@@ -165,6 +165,7 @@ public class AuthControllerTest {
         when(refreshTokenService.findByToken(Mockito.any(String.class))).thenReturn(Optional.of(testRefreshToken));
         when(refreshTokenService.verifyExpiration(Mockito.any(RefreshToken.class))).thenReturn(testRefreshToken);
         when(jwtUtils.generateTokenFromUsername(Mockito.any(String.class))).thenReturn(testJwtToken);
+        when(refreshTokenService.createRefreshToken(Mockito.any())).thenReturn(testRefreshToken);
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/auth/refresh-token")
                         .content(refreshTokenString)

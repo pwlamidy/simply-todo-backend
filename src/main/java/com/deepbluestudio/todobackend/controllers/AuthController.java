@@ -9,6 +9,7 @@ import com.deepbluestudio.todobackend.payload.request.TokenRefreshRequest;
 import com.deepbluestudio.todobackend.payload.response.LoginResponse;
 import com.deepbluestudio.todobackend.payload.response.ResponseHandler;
 import com.deepbluestudio.todobackend.payload.response.TokenRefreshResponse;
+import com.deepbluestudio.todobackend.repository.RefreshTokenRepository;
 import com.deepbluestudio.todobackend.repository.UserRepository;
 import com.deepbluestudio.todobackend.security.jwt.JwtUtils;
 import com.deepbluestudio.todobackend.security.services.RefreshTokenService;
@@ -41,6 +42,9 @@ public class AuthController {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -87,17 +91,25 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
 
-        return refreshTokenService.findByToken(requestRefreshToken)
-                .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map(user -> {
-                    String token = jwtUtils.generateTokenFromUsername(user.getUsername());
-                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
-                })
-                .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
-                        "Refresh token is not in database!"));
+        RefreshToken currRefreshToken = refreshTokenService.findByToken(requestRefreshToken).orElse(null);
+
+        if (currRefreshToken != null) {
+            refreshTokenService.verifyExpiration(currRefreshToken);
+            User user = currRefreshToken.getUser();
+
+            String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+
+            // Refresh token rotation: refresh token can only be used once and a new refresh token is generated after use
+            refreshTokenRepository.delete(currRefreshToken);
+            RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+            return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
+        } else {
+            throw new TokenRefreshException(requestRefreshToken,
+                    "Refresh token is not in database!");
+        }
     }
 }
