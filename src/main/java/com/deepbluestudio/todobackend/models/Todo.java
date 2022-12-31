@@ -1,6 +1,7 @@
 package com.deepbluestudio.todobackend.models;
 
 import com.deepbluestudio.todobackend.repository.dto.TodoCount;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,6 +54,7 @@ public class Todo {
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     @NotNull
+    @JsonIgnore
     private User user;
 
     public Todo() {
