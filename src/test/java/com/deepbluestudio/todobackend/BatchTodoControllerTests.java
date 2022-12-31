@@ -1,7 +1,9 @@
 package com.deepbluestudio.todobackend;
 
 import com.deepbluestudio.todobackend.models.Todo;
+import com.deepbluestudio.todobackend.models.User;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class BatchTodoControllerTests {
     @Autowired
     private MockMvc mockMvc;
@@ -30,11 +32,18 @@ public class BatchTodoControllerTests {
     @MockBean
     TodoRepository todoRepository;
 
+    private static User testUser;
+
+    @BeforeEach
+    public void setUp() {
+        testUser = new User("test", "test@test.com", "test");
+    }
+
     @Test
     public void batchUpdateTodoShouldBeSuccess() throws Exception {
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", "test details", null, null, null, new Date(), new Date()));
-        todoList.add(new Todo(2L, "title 2", "test details", null, null, null, new Date(), new Date()));
+        todoList.add(new Todo(1L, "title 1", "test details", null, null, null, new Date(), new Date(), testUser));
+        todoList.add(new Todo(2L, "title 2", "test details", null, null, null, new Date(), new Date(), testUser));
         when(todoRepository.saveAll(ArgumentMatchers.anyList())).thenReturn(todoList);
         this.mockMvc.perform(post("/api/batch/todos")
                         .content("[{\"id\":1},{\"id\":2}]")

@@ -1,8 +1,11 @@
 package com.deepbluestudio.todobackend;
 
 import com.deepbluestudio.todobackend.models.Todo;
+import com.deepbluestudio.todobackend.models.User;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
 import com.deepbluestudio.todobackend.repository.dto.TodoCount;
+import com.deepbluestudio.todobackend.services.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 public class TodoControllerTests {
     @Autowired
     private MockMvc mockMvc;
@@ -33,15 +36,26 @@ public class TodoControllerTests {
     @MockBean
     TodoRepository todoRepository;
 
+    @MockBean
+    private UserService userService;
+
+    private static User testUser;
+
+    @BeforeEach
+    public void setUp() {
+        testUser = new User("test", "test@test.com", "test");
+    }
+
     @Test
     public void getTodoShouldBeSuccess() throws Exception {
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", null, null, null, null, null, null));
-        todoList.add(new Todo(2L, "title 2", null, null, null, null, null, null));
+        todoList.add(new Todo(1L, "title 1", null, null, null, null, null, null, testUser));
+        todoList.add(new Todo(2L, "title 2", null, null, null, null, null, null, testUser));
 
         Page<Todo> aMockPage = generateMockPage(todoList);
 
-        when(todoRepository.findAll(Mockito.any(Pageable.class))).thenReturn(aMockPage);
+        when(userService.getUser()).thenReturn(testUser);
+        when(todoRepository.findAllByUser(Mockito.any(User.class), Mockito.any(Pageable.class))).thenReturn(aMockPage);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos"))
                 .andExpect(status().isOk())
@@ -53,12 +67,13 @@ public class TodoControllerTests {
         Date now = new Date();
 
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", null, null, null, null, now, now));
-        todoList.add(new Todo(2L, "title 2", null, null, null, null, now, now));
+        todoList.add(new Todo(1L, "title 1", null, null, null, null, now, now, testUser));
+        todoList.add(new Todo(2L, "title 2", null, null, null, null, now, now, testUser));
 
         Page<Todo> aMockPage = generateMockPage(todoList);
 
-        when(todoRepository.findAllByDateBetween(any(Date.class), any(Date.class), Mockito.any(Pageable.class)))
+        when(userService.getUser()).thenReturn(testUser);
+        when(todoRepository.findAllByUserAndDateBetween(Mockito.any(User.class), any(Date.class), any(Date.class), Mockito.any(Pageable.class)))
                 .thenReturn(aMockPage);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos")
@@ -70,7 +85,7 @@ public class TodoControllerTests {
 
     @Test
     public void createTodoShouldBeSuccess() throws Exception {
-        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date());
+        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date(), testUser);
 
         when(todoRepository.save(Mockito.any(Todo.class))).thenReturn(mockTodo);
 
@@ -83,7 +98,7 @@ public class TodoControllerTests {
 
     @Test
     public void updateTodoShouldBeSuccess() throws Exception {
-        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date());
+        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date(), testUser);
 
         when(todoRepository.findById(mockTodo.getId())).thenReturn(Optional.of(mockTodo));
 
@@ -110,7 +125,8 @@ public class TodoControllerTests {
         final List<TodoCount> todoCountList = new ArrayList<>();
         todoCountList.add(new TodoCount(now, 2L));
 
-        when(todoRepository.countTotalTodosByDateClass(any(Date.class), any(Date.class))).thenReturn(todoCountList);
+        when(userService.getUser()).thenReturn(testUser);
+        when(todoRepository.countTotalTodosByDateClass(any(), any(Date.class), any(Date.class))).thenReturn(todoCountList);
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos/count-by-date")
                         .param("date_gte", "2022-11-28T16:00:00.000Z")

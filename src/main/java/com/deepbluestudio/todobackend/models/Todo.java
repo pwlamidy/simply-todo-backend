@@ -13,7 +13,7 @@ import java.util.Date;
         name = "find_todocount_dto",
         query = "SELECT DATE(t.date) AS date, COUNT(t.date) AS total " +
                 "FROM Todo AS t " +
-                "WHERE DATE(t.date) between :startDate and :endDate " +
+                "WHERE t.user_id = :userId AND DATE(t.date) between :startDate and :endDate " +
                 "GROUP BY DATE(t.date) " +
                 "ORDER BY DATE(t.date)",
         resultSetMapping = "todocount_dto"
@@ -50,11 +50,16 @@ public class Todo {
     @UpdateTimestamp
     private Date updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @NotNull
+    private User user;
+
     public Todo() {
 
     }
 
-    public Todo(Long id, String title, String details, Date date, Date time, Boolean completed, Date createdAt, Date updatedAt) {
+    public Todo(Long id, String title, String details, Date date, Date time, Boolean completed, Date createdAt, Date updatedAt, User user) {
         this.id = id;
         this.title = title;
         this.details = details;
@@ -63,6 +68,7 @@ public class Todo {
         this.completed = completed;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.user = user;
     }
 
     public void setId(Long id) {
@@ -127,5 +133,13 @@ public class Todo {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

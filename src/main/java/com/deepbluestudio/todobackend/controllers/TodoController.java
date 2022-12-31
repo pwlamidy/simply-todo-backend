@@ -1,10 +1,12 @@
 package com.deepbluestudio.todobackend.controllers;
 
 import com.deepbluestudio.todobackend.models.Todo;
+import com.deepbluestudio.todobackend.models.User;
 import com.deepbluestudio.todobackend.payload.response.EStatus;
 import com.deepbluestudio.todobackend.payload.response.ResponseHandler;
-import com.deepbluestudio.todobackend.repository.dto.TodoCount;
 import com.deepbluestudio.todobackend.repository.TodoRepository;
+import com.deepbluestudio.todobackend.repository.dto.TodoCount;
+import com.deepbluestudio.todobackend.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,13 +21,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/todos")
 @Tag(name = "Todo")
 public class TodoController {
+    @Autowired
+    private UserService userService;
+
     final TodoRepository todoRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(TodoController.class);
@@ -37,7 +44,10 @@ public class TodoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTodoById(@PathVariable("id") Long id) {
-        Optional<Todo> todo = todoRepository.findById(id);
+        User user = userService.getUser();
+
+        Optional<Todo> todo = todoRepository.findByUserAndId(user, id);
+
         return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, todo);
     }
 
@@ -53,6 +63,8 @@ public class TodoController {
                                       @RequestParam(value = "sort", defaultValue = "updatedAt")
                                       @Parameter(description = "Support 'Todo' schema only") String sort,
                                       @RequestParam(value = "order", defaultValue = "desc") String order) {
+        User user = userService.getUser();
+
         Page<Todo> todos;
         PageRequest pageRequest = PageRequest.of(
                 page - 1,
@@ -62,7 +74,7 @@ public class TodoController {
                         : Sort.by(sort).ascending());
 
         if (startDate == null || endDate == null) {
-            todos = todoRepository.findAll(pageRequest);
+            todos = todoRepository.findAllByUser(user, pageRequest);
         } else {
             OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
             OffsetDateTime parsedEndDate = OffsetDateTime.parse(endDate);
@@ -72,7 +84,7 @@ public class TodoController {
 
             logger.error(startDateTime + ", " + endDateTime);
 
-            todos = todoRepository.findAllByDateBetween(startDateTime, endDateTime, pageRequest);
+            todos = todoRepository.findAllByUserAndDateBetween(user, startDateTime, endDateTime, pageRequest);
         }
         return ResponseHandler.generateResponseWithPaging(
                 EStatus.SUCCESS.getStatus(),
@@ -124,13 +136,15 @@ public class TodoController {
                                               @RequestParam(value = "date_lte")
                                               @Parameter(description = "Date less than or equal to value. Support ISO format (ISO 8601)",
                                                       example = "2022-11-27T16:00:00.000Z") String endDate) {
+        User user = userService.getUser();
+
         OffsetDateTime parsedStartDateTime = OffsetDateTime.parse(startDate);
         OffsetDateTime parsedEndDate = OffsetDateTime.parse(endDate);
 
         Date startDateTime = Date.from(parsedStartDateTime.toInstant());
         Date endDateTime = Date.from(parsedEndDate.toInstant());
 
-        List<TodoCount> todoCountList = todoRepository.countTotalTodosByDateClass(startDateTime, endDateTime);
+        List<TodoCount> todoCountList = todoRepository.countTotalTodosByDateClass(user.getId(), startDateTime, endDateTime);
 
         return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, todoCountList);
     }
