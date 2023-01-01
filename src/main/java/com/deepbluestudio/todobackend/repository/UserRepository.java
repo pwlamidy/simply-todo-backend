@@ -1,10 +1,14 @@
 package com.deepbluestudio.todobackend.repository;
 
 import com.deepbluestudio.todobackend.models.User;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Hidden
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 

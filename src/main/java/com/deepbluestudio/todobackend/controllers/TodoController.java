@@ -9,6 +9,7 @@ import com.deepbluestudio.todobackend.repository.dto.TodoCount;
 import com.deepbluestudio.todobackend.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/todos")
 @Tag(name = "Todo")
+@SecurityRequirement(name = "bearerAuth")
 public class TodoController {
     @Autowired
     private UserService userService;
