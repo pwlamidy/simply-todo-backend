@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -33,30 +34,35 @@ public class BatchTodoControllerTests {
     TodoRepository todoRepository;
 
     private static User testUser;
+    private static UUID testUUID;
+    private static UUID testUUID2;
 
     @BeforeEach
     public void setUp() {
         testUser = new User("test", "test@test.com", "test");
+        testUUID = UUID.randomUUID();
+        testUUID2 = UUID.randomUUID();
     }
 
     @Test
     public void batchUpdateTodoShouldBeSuccess() throws Exception {
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", "test details", null, null, null, new Date(), new Date(), testUser));
-        todoList.add(new Todo(2L, "title 2", "test details", null, null, null, new Date(), new Date(), testUser));
+        todoList.add(new Todo(testUUID, "title 1", "test details", null, null, null, new Date(), new Date(), testUser));
+        todoList.add(new Todo(testUUID2, "title 2", "test details", null, null, null, new Date(), new Date(), testUser));
+
         when(todoRepository.saveAll(ArgumentMatchers.anyList())).thenReturn(todoList);
         this.mockMvc.perform(post("/api/batch/todos")
-                        .content("[{\"id\":1},{\"id\":2}]")
+                        .content(String.format("[{\"id\":\"%s\"},{\"id\":\"%s\"}]", testUUID.toString(), testUUID2.toString()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[1].id").value(2L));
+                .andExpect(jsonPath("$[0].id").value(testUUID.toString()))
+                .andExpect(jsonPath("$[1].id").value(testUUID2.toString()));
     }
 
     @Test
     public void batchDeleteTodoShouldBeSuccess() throws Exception {
         this.mockMvc.perform(delete("/api/batch/todos")
-                        .content("[{\"id\":1},{\"id\":2}]")
+                        .content(String.format("[{\"id\":\"%s\"},{\"id\":\"%s\"}]", testUUID.toString(), testUUID2.toString()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }

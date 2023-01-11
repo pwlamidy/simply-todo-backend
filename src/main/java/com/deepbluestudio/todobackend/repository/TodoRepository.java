@@ -14,16 +14,17 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Hidden
 @Repository
-public interface TodoRepository extends JpaRepository<Todo, Long> {
+public interface TodoRepository extends JpaRepository<Todo, UUID> {
     Page<Todo> findAllByUserAndDateBetween(User user, Date startDate, Date endDate, Pageable pageable);
 
     Page<Todo> findAllByUser(User user, Pageable pageable);
 
-    Optional<Todo> findByUserAndId(User user, Long id);
+    Optional<Todo> findByUserAndId(User user, UUID id);
 
     @Query(name = "find_todocount_dto", nativeQuery = true)
-    List<TodoCount> countTotalTodosByDateClass(Long userId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    List<TodoCount> countTotalTodosByDateClass(UUID userId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }

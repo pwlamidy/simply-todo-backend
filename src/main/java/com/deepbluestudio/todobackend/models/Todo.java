@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Entity
 @NamedNativeQuery(
@@ -31,8 +32,8 @@ import java.util.Date;
 )
 public class Todo {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @NotNull
     private String title;
@@ -61,7 +62,7 @@ public class Todo {
 
     }
 
-    public Todo(Long id, String title, String details, Date date, Date time, Boolean completed, Date createdAt, Date updatedAt, User user) {
+    public Todo(UUID id, String title, String details, Date date, Date time, Boolean completed, Date createdAt, Date updatedAt, User user) {
         this.id = id;
         this.title = title;
         this.details = details;
@@ -73,11 +74,11 @@ public class Todo {
         this.user = user;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

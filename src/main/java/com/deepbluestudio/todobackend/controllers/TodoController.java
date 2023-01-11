@@ -25,6 +25,7 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -45,7 +46,7 @@ public class TodoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTodoById(@PathVariable("id") Long id) {
+    public ResponseEntity<?> getTodoById(@PathVariable("id") UUID id) {
         User user = userService.getUser();
 
         Optional<Todo> todo = todoRepository.findByUserAndId(user, id);
@@ -103,7 +104,7 @@ public class TodoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> putTodo(@PathVariable("id") Long id, @RequestBody Todo todo) {
+    public ResponseEntity<?> putTodo(@PathVariable("id") UUID id, @RequestBody Todo todo) {
         Object updateResult = null;
         Optional<Todo> existingTodo = todoRepository.findById(id);
         if (existingTodo.isPresent()) {
@@ -114,7 +115,7 @@ public class TodoController {
 
     @Operation(description = "Currently support 'completed' status update only")
     @PatchMapping("/{id}")
-    public ResponseEntity<?> patchTodo(@PathVariable("id") Long id, @RequestBody Todo todo) {
+    public ResponseEntity<?> patchTodo(@PathVariable("id") UUID id, @RequestBody Todo todo) {
         Object updateResult = null;
         Optional<Todo> existingTodo = todoRepository.findById(id);
         if (existingTodo.isPresent()) {
@@ -126,7 +127,7 @@ public class TodoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTodo(@PathVariable("id") Long id) {
+    public ResponseEntity<?> deleteTodo(@PathVariable("id") UUID id) {
         todoRepository.deleteById(id);
         return ResponseHandler.generateResponseWithoutData(EStatus.SUCCESS.getStatus(), HttpStatus.OK);
     }

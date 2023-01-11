@@ -40,17 +40,21 @@ public class TodoControllerTests {
     private UserService userService;
 
     private static User testUser;
+    private static UUID testUUID;
+    private static UUID testUUID2;
 
     @BeforeEach
     public void setUp() {
         testUser = new User("test", "test@test.com", "test");
+        testUUID = UUID.randomUUID();
+        testUUID2 = UUID.randomUUID();
     }
 
     @Test
     public void getTodoShouldBeSuccess() throws Exception {
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", null, null, null, null, null, null, testUser));
-        todoList.add(new Todo(2L, "title 2", null, null, null, null, null, null, testUser));
+        todoList.add(new Todo(testUUID, "title 1", null, null, null, null, null, null, testUser));
+        todoList.add(new Todo(testUUID2, "title 2", null, null, null, null, null, null, testUser));
 
         Page<Todo> aMockPage = generateMockPage(todoList);
 
@@ -59,7 +63,7 @@ public class TodoControllerTests {
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/todos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(1L));
+                .andExpect(jsonPath("$.data[0].id").value(testUUID.toString()));
     }
 
     @Test
@@ -67,8 +71,8 @@ public class TodoControllerTests {
         Date now = new Date();
 
         final List<Todo> todoList = new ArrayList<>();
-        todoList.add(new Todo(1L, "title 1", null, null, null, null, now, now, testUser));
-        todoList.add(new Todo(2L, "title 2", null, null, null, null, now, now, testUser));
+        todoList.add(new Todo(testUUID, "title 1", null, null, null, null, now, now, testUser));
+        todoList.add(new Todo(testUUID2, "title 2", null, null, null, null, now, now, testUser));
 
         Page<Todo> aMockPage = generateMockPage(todoList);
 
@@ -80,12 +84,12 @@ public class TodoControllerTests {
                         .param("date_gte", "2022-11-28T16:00:00.000Z")
                         .param("date_lte", "2022-11-28T16:00:00.000Z"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(1L));
+                .andExpect(jsonPath("$.data[0].id").value(testUUID.toString()));
     }
 
     @Test
     public void createTodoShouldBeSuccess() throws Exception {
-        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date(), testUser);
+        Todo mockTodo = new Todo(testUUID, "title 1", null, null, null, null, new Date(), new Date(), testUser);
 
         when(todoRepository.save(Mockito.any(Todo.class))).thenReturn(mockTodo);
 
@@ -98,14 +102,14 @@ public class TodoControllerTests {
 
     @Test
     public void updateTodoShouldBeSuccess() throws Exception {
-        Todo mockTodo = new Todo(1L, "title 1", null, null, null, null, new Date(), new Date(), testUser);
+        Todo mockTodo = new Todo(testUUID, "title 1", null, null, null, null, new Date(), new Date(), testUser);
 
         when(todoRepository.findById(mockTodo.getId())).thenReturn(Optional.of(mockTodo));
 
         mockTodo.setCompleted(true);
         when(todoRepository.save(mockTodo)).thenReturn(mockTodo);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.patch("/api/todos/1")
+        this.mockMvc.perform(MockMvcRequestBuilders.patch("/api/todos/"+testUUID)
                         .content("{\"completed\":true}")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -114,7 +118,7 @@ public class TodoControllerTests {
 
     @Test
     public void deleteTodoShouldBeSuccess() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/todos/5"))
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/todos/"+testUUID))
                 .andExpect(status().isOk());
     }
 
