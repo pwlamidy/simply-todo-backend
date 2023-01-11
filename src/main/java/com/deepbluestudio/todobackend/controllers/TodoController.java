@@ -99,6 +99,9 @@ public class TodoController {
 
     @PostMapping
     public ResponseEntity<?> addTodo(@RequestBody Todo todo) {
+        User user = userService.getUser();
+        todo.setUser(user);
+
         Object saveResult = todoRepository.save(todo);
         return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, saveResult);
     }
@@ -108,6 +111,9 @@ public class TodoController {
         Object updateResult = null;
         Optional<Todo> existingTodo = todoRepository.findById(id);
         if (existingTodo.isPresent()) {
+            User user = userService.getUser();
+            todo.setUser(user);
+
             updateResult = todoRepository.save(todo);
         }
         return ResponseHandler.generateResponse(EStatus.SUCCESS.getStatus(), HttpStatus.OK, updateResult);
